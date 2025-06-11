@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Form Permohonan Layanan</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width:600px; margin:auto; padding:20px; }
+    label { display:block; margin-top:15px; }
+    input, select, button { width:100%; padding:8px; margin-top:5px; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <h2>Form Permohonan Layanan</h2>
+  <form id="permohonanForm">
+    <label>Permohonan Layanan:</label>
+    <select id="permohonan" required>
+      <option value="">Pilih</option>
+      <option value="Tera">Tera</option>
+      <option value="Tera Ulang">Tera Ulang</option>
+    </select>
+
+    <label>Jenis UTTP:</label>
+    <select id="jenisUttp" required onchange="onJenisUTTPChange()">
+      <option value="">Pilih</option>
+      <option value="Timbangan">Timbangan</option>
+      <option value="PU BBM">PU BBM</option>
+    </select>
+
+    <div id="timbanganGroup" class="hidden">
+      <label>Jenis Timbangan:</label>
+      <select id="jenisTimbangan" onchange="onTimbanganChange()">
+        <option value="">Pilih</option>
+        <option value="Timbangan Meja">Timbangan Meja</option>
+        <option value="Timbangan Elektronik">Timbangan Elektronik</option>
+        <option value="Timbangan Dacin Logam">Timbangan Dacin Logam</option>
+        <option value="Timbangan Sentisimal">Timbangan Sentisimal</option>
+        <option value="Timbangan Milisimal">Timbangan Milisimal</option>
+        <option value="Timbangan Jembatan">Timbangan Jembatan</option>
+        <option value="Timbangan lainnya">Timbangan lainnya</option>
+      </select>
+      <div id="lainnyaGroup" class="hidden">
+        <label>Sebutkan Timbangan lainnya:</label>
+        <input type="text" id="lainnya" />
+      </div>
+    </div>
+
+    <label>Tanggal Pengujian:</label>
+    <input type="date" id="tanggal" required />
+
+    <label>Jumlah Alat Ukur:</label>
+    <input type="number" id="jumlah" required min="1" />
+
+    <label>Upload Surat Permohonan (PDF):</label>
+    <input type="file" id="file" accept="application/pdf" required />
+
+    <button type="submit" style="margin-top:20px;">Kirim</button>
+  </form>
+
+  <script>
+    const backendUrl = 'YOUR_DEPLOYED_APPSCRIPT_URL'; // Ganti URL dari step deploy Apps Script
+
+    function onJenisUTTPChange() {
+      const show = document.getElementById('jenisUttp').value === 'Timbangan';
+      document.getElementById('timbanganGroup').classList.toggle('hidden', !show);
+    }
+    function onTimbanganChange() {
+      const show = document.getElementById('jenisTimbangan').value === 'Timbangan lainnya';
+      document.getElementById('lainnyaGroup').classList.toggle('hidden', !show);
+    }
+
+    document.getElementById('permohonanForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const file = document.getElementById('file').files[0];
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const data = {
+          permohonan: document.getElementById('permohonan').value,
+          jenisUttp: document.getElementById('jenisUttp').value,
+          jenisTimbangan: document.getElementById('jenisTimbangan').value,
+          lainnya: document.getElementById('lainnya').value,
+          tanggal: document.getElementById('tanggal').value,
+          jumlah: document.getElementById('jumlah').value,
+          fileName: file.name,
+          fileContent: btoa(reader.result)
+        };
+        const res = await fetch(backendUrl, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: {'Content-Type':'application/json'}
+        });
+        const result = await res.json();
+        alert(result.success ? 'Berhasil dikirim!' : 'Gagal: ' + result.error);
+        if (result.success) e.target.reset();
+      };
+      reader.readAsBinaryString(file);
+    });
+  </script>
+</body>
+</html>
